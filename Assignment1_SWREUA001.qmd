@@ -29,6 +29,7 @@ execute:
 *1) Find all rows in “airquality” that have missing values.*
 
 ```{r, echo = TRUE}
+# Display all rows containing `na` values
 which(is.na(airquality))
 ```
 
@@ -37,19 +38,23 @@ which(is.na(airquality))
 *2) Find mean, sd, min, max for each of temperature and ozone level.*
 
 ```{r, echo = TRUE}
+
+# Drop all observations containing `na` values
 new = na.omit(airquality)
 
+# Statistics for Temperature
 meanT = mean(new$Temp)
 sdT = sd(new$Temp)
 minT = min(new$Temp)
 maxT = max(new$Temp)
 
-
+# Statistics for Ozone
 meanO = mean(new$Ozone)
 sdO = sd(new$Ozone)
 minO = min(new$Ozone)
 maxO = max(new$Ozone)
 
+# Data frame for display in table
 summary_stats = data.frame(
   Variable = c('Temperature', 'Ozone'),
   Mean = c(meanT, meanO),
@@ -58,6 +63,7 @@ summary_stats = data.frame(
   Max = c(maxT, maxO)
 )
 
+# Table displayed using kable()
 knitr::kable(
   summary_stats,
   digits = 2,
@@ -66,25 +72,30 @@ knitr::kable(
 ```
 
 ## Question 3
-*3) For linear regression, parameter estimates can be found as follows. $\hat{\beta} = (X^TX)^{-1}X^TY$
- Here, Y is the response variable, and X is the design matrix. The cars data (an R data set, also always available in R) contains two variables: speed and distance to stop. Fit a simple linear regression model to these data, i.e. find the estimates, using the equation above, and matrix calculations in R.*
- 
+
+*3) For linear regression, parameter estimates can be found as follows.* $\hat{\beta} = (X^TX)^{-1}X^TY$ *Here, Y is the response variable, and X is the design matrix. The cars data (an R data set, also always available in R) contains two variables: speed and distance to stop. Fit a simple linear regression model to these data, i.e. find the estimates, using the equation above, and matrix calculations in R.*
+
 ```{r, echo = TRUE}
 attach(cars)
 
+# Initialize design matrix for X and vector for Y
 X = model.matrix(dist ~ speed, data = cars)
 Y = as.matrix(cars$dist)
 
+# Solve \hat{\beta} matrix nad return values
 beta_hat <- solve(t(X) %*% X) %*% t(X) %*% Y
-
 beta_hat
 ```
 
 ## Question 4
-*4) Check that you get the same $\beta$ estimates as when fitting the linear regression model using `lm()` in R.*
+
+*4) Check that you get the same* $\beta$ *estimates as when fitting the linear regression model using `lm()` in R.*
+
 ```{r, echo = TRUE}
+# Fit model using lm()
 cars_model = lm(dist~speed)
 
+# Dataframe for table
 comp = data.frame(
   Model = c('`lm()`', 'First Principles'),
   Intercept = c('-17.579 ', '-17.579095'),
