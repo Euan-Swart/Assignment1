@@ -1,0 +1,99 @@
+---
+subtitle: "Statistical Computing"
+title: "Assignment 1"
+author: "Euan Swart (SWREUA001)"
+date: last-modified
+format:
+  html:
+    theme: 
+      - cosmo
+      - custom.scss
+    toc: true
+    toc-depth: 3
+    number-sections: false
+    df-print: paged
+    code-fold: false
+    code-tools: true
+    smooth-scroll: true
+editor: visual
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+# Practical 1
+
+## Question 1
+
+*1) Find all rows in “airquality” that have missing values.*
+
+```{r, echo = TRUE}
+which(is.na(airquality))
+```
+
+## Question 2
+
+*2) Find mean, sd, min, max for each of temperature and ozone level.*
+
+```{r, echo = TRUE}
+new = na.omit(airquality)
+
+meanT = mean(new$Temp)
+sdT = sd(new$Temp)
+minT = min(new$Temp)
+maxT = max(new$Temp)
+
+
+meanO = mean(new$Ozone)
+sdO = sd(new$Ozone)
+minO = min(new$Ozone)
+maxO = max(new$Ozone)
+
+summary_stats = data.frame(
+  Variable = c('Temperature', 'Ozone'),
+  Mean = c(meanT, meanO),
+  SD = c(sdT, sdO),
+  Min = c(minT, minO),
+  Max = c(maxT, maxO)
+)
+
+knitr::kable(
+  summary_stats,
+  digits = 2,
+  caption = 'Statistics for Temperature and Ozone'
+)
+```
+
+## Question 3
+*3) For linear regression, parameter estimates can be found as follows. $\hat{\beta} = (X^TX)^{-1}X^TY$
+ Here, Y is the response variable, and X is the design matrix. The cars data (an R data set, also always available in R) contains two variables: speed and distance to stop. Fit a simple linear regression model to these data, i.e. find the estimates, using the equation above, and matrix calculations in R.*
+ 
+```{r, echo = TRUE}
+attach(cars)
+
+X = model.matrix(dist ~ speed, data = cars)
+Y = as.matrix(cars$dist)
+
+beta_hat <- solve(t(X) %*% X) %*% t(X) %*% Y
+
+beta_hat
+```
+
+## Question 4
+*4) Check that you get the same $\beta$ estimates as when fitting the linear regression model using `lm()` in R.*
+```{r, echo = TRUE}
+cars_model = lm(dist~speed)
+
+comp = data.frame(
+  Model = c('`lm()`', 'First Principles'),
+  Intercept = c('-17.579 ', '-17.579095'),
+  Coefficient = c('3.932 ',"3.932409")
+)
+
+knitr::kable(
+  comp,
+  digits = 6,
+  caption = 'Comparison of Results for Estimates'
+)
+```
