@@ -1,0 +1,527 @@
+---
+subtitle: "Statistical Computing"
+title: "Assignment 1"
+author: "Euan Swart (SWREUA001)"
+date: last-modified
+project:
+  type: website
+  render:
+    output-dir: _site 
+format:
+  html:
+    theme: 
+      - cosmo
+      - custom.scss
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    df-print: paged
+    code-fold: false
+    code-tools: true
+    smooth-scroll: true
+editor: visual
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+# Practical 1
+
+## Question 1
+
+*1) Find all rows in “airquality” that have missing values.*
+
+```{r, echo = TRUE}
+library(knitr)
+library(kableExtra)
+library(dplyr)
+# Display all rows containing `na` values
+airquality %>% 
+  filter(if_any(everything(), is.na)) %>%
+  kable(caption = 'Rows containing NA values') %>%
+  kable_styling(full_width = FALSE) %>%
+  scroll_box(height = '300px')  
+```
+
+## Question 2
+
+*2) Find mean, sd, min, max for each of temperature and ozone level.*
+
+```{r, echo = TRUE}
+
+# Drop all observations containing `na` values
+new = na.omit(airquality)
+
+# Statistics for Temperature
+meanT = mean(new$Temp)
+sdT = sd(new$Temp)
+minT = min(new$Temp)
+maxT = max(new$Temp)
+
+# Statistics for Ozone
+meanO = mean(new$Ozone)
+sdO = sd(new$Ozone)
+minO = min(new$Ozone)
+maxO = max(new$Ozone)
+
+# Data frame for display in table
+summary_stats = data.frame(
+  Variable = c('Temperature', 'Ozone'),
+  Mean = c(meanT, meanO),
+  SD = c(sdT, sdO),
+  Min = c(minT, minO),
+  Max = c(maxT, maxO)
+)
+
+# Table displayed using kable()
+knitr::kable(
+  summary_stats,
+  digits = 2,
+  caption = 'Statistics for Temperature and Ozone'
+)
+```
+
+## Question 3
+
+*3) For linear regression, parameter estimates can be found as follows.* $\hat{\beta} = (X^TX)^{-1}X^TY$ *Here, Y is the response variable, and X is the design matrix. The cars data (an R data set, also always available in R) contains two variables: speed and distance to stop. Fit a simple linear regression model to these data, i.e. find the estimates, using the equation above, and matrix calculations in R.*
+
+```{r, echo = TRUE}
+attach(cars)
+
+# Initialize design matrix for X and vector for Y
+X = model.matrix(dist ~ speed, data = cars)
+Y = as.matrix(cars$dist)
+
+# Solve \hat{\beta} matrix and return values
+beta_hat = solve(t(X) %*% X) %*% t(X) %*% Y
+beta_hat %>%
+  t() %>%
+  as.data.frame () %>%
+  kable(digits = 4, caption = "Regression Coefficients") 
+```
+
+## Question 4
+
+*4) Check that you get the same* $\beta$ *estimates as when fitting the linear regression model using `lm()` in R.*
+
+```{r, echo = TRUE}
+# Fit model using lm()
+cars_model = lm(dist~speed)
+
+# Dataframe for table
+comp = data.frame(
+  Model = c('`lm()`', 'First Principles (Beta Matrix)'),
+  Intercept = c('-17.579 ', '-17.579095'),
+  Coefficient = c('3.932 ',"3.932409")
+)
+
+# Table output
+knitr::kable(
+  comp,
+  digits = 6,
+  caption = 'Comparison of Results for Estimates'
+)
+```
+
+# Day 3 Practical
+
+## Question 4
+
+*Plot the function* $f(x) = \sin(x)$ *for* $x \in [-2,2]$
+
+```{r, echo=TRUE}
+# Generate equally spaced values over the domain and find function values
+x = seq(from = -2, to = 2, length.out = 1000)
+y = sin(x)
+
+# Plot function
+plot(x,y, cex = 1, pch = 16,
+     col = 'red',
+     main = "Plot of sin(x)"
+)
+```
+
+## Question 5
+
+*Generate 1000 values from a* $t$ *-distribution with 1 degree of freedom. Construct a QQ-plot with 95% probability bands (envelopes) to check whether the above values come from a standard normal distribution.*
+
+```{r, echo = TRUE}
+# Simulate required samples
+s = sort(rt(1000, 1))
+z = sort(rnorm(1000, 0, 1))
+
+# Calculate derived values and theoretical quantiles
+n = length(s)
+p = (1:n - 0.5)/n
+theor = z[ceiling(p * length(z))]
+
+# Plot
+plot(theor, s, pch = 16,
+     xlab = 'Normal Quantiles',
+     ylab = 'Sample Quantiles',
+     main = 'QQ-plot of t(1) vs Standard Normal',
+     ylim = c(-5,5),
+     xlim = c(-2,2))
+
+
+# Diagonal Reference line
+abline(0,1,col = 'gray40', lwd = 2)
+
+# Adding Probability Bands
+B = 1000
+sim = matrix(NA, n, B)
+
+for (b in 1:B){
+  sim[,b] = sort(rnorm(n))
+}
+
+lower = apply(sim, 1 , quantile, probs = 0.025)
+upper = apply(sim, 1 , quantile, probs = 0.975)
+
+# Shaded Probability Band
+polygon(
+  c(theor, rev(theor)),
+  c(lower, rev(upper)),
+  col = rgb(30/255, 144/255, 255/255, 0.25),
+  border = NA
+)
+
+# Probability band boundaries
+lines(theor, lower, col = "dodgerblue3", lwd = 2, lty = 2)
+lines(theor, upper, col = "dodgerblue3", lwd = 2, lty = 2)
+
+# Diagonal Reference line
+abline(0, 1, col = "gray40", lwd = 2)
+box(lwd = 1.2)
+```
+
+# Practical 4
+
+## Question 1
+
+*Display the `flights` dataset in an alternative format to simply printing it (i.e. running `flights`)*
+
+```{r, echo=TRUE}
+# Load required libraries
+library(nycflights13)
+library(tidyverse)
+library(dplyr)
+
+# Attach `flights` data set to local environment
+data(flights)
+
+# Displaying top 6 rows of `flights`
+kable(head(flights))
+```
+
+## Question 2
+
+*Rewrite the given code using `dplyr` and the pipe operator*
+
+```{r}
+# Using pipe operator and native functions to manipulate dateframe
+dist_tbl =
+  flights %>%
+  filter(month == 1) %>%
+  group_by(carrier) %>%
+  summarise(
+    mean_distance = mean(distance),
+    sd_distance = sd(distance)
+  ) %>%
+  arrange(mean_distance)
+  
+# Display final data frame
+kable(dist_tbl)
+```
+
+## Question 3
+
+*Explain why the standard deviation is `NA` for one carrier, and why it is `0` for others. Demonstrate your answer using code.* 
+\newline The standard deviation for carrier 'OO' is `NA` because, there is only one flight from the carrier that meets the required criteria so the row vector has length one. As such, when the standard deviation function is applied to that row vector it returns the value `NA`.
+
+```{r, echo = TRUE}
+# Filter to show that the row vector has length 1
+oo = flights %>%
+  filter(carrier == 'OO',
+         month == 1)
+kable(oo)
+```
+
+For carrier YV, the standard deviation of the distances is 0 because all of this distances are the same length (all distances are 229).
+
+```{r, echo = TRUE}
+# Select all flights from carrier
+yv = flights %>%
+  filter(carrier == 'YV',
+         month == 1) %>%
+  select(carrier, distance)
+
+kable(yv) %>%
+  kable_styling(full_width = FALSE) %>%
+  scroll_box(height = '300px')
+```
+
+## Question 4
+
+*Using `tidyr` and `dplyr` where appropriate, construct a dataframe where the carriers are along the columns, and the rows are the average departure delay (`dep_delay`) flown by each carrier (`carrier`) in each month.*
+
+```{r, echo = TRUE}
+
+new = flights %>%
+  group_by(month, carrier) %>%
+  summarise( # Calculate mean delay time
+    avg_dep_delay = mean(dep_delay, na.rm = TRUE)
+            ) %>%
+  pivot_wider( # Mutate dataframe to required wide format
+    names_from = carrier,
+    values_from = avg_dep_delay
+  )
+
+kable(new)
+```
+
+## Question 5
+
+*Calculate the proportion of flights that were delayed (`dep_delay` greater than `0`) but arrived on or before time (`arr_delay` less than or equal to `0`).*
+
+```{r, echo = TRUE}
+prop_delayed = flights %>%
+  summarize(prop_delayed = mean(dep_delay > 0 & arr_delay <= 0, na.rm = TRUE))
+kable(prop_delayed)
+```
+
+## Question 6
+
+*Using the `airlines` and `flights` datasets, do the following, showing the output from each step* - *Identify routes that more than one airline flies*
+
+```{r, echo = TRUE}
+library(kableExtra)
+routes = flights %>%
+  distinct(origin,dest, carrier) %>%
+  group_by(dest,origin) %>% # Origin-Dest pairs form a route
+  filter(n()>1) %>% # More than one airline
+  ungroup() %>%
+  arrange(origin, dest)
+
+kable(routes, caption = 'Routes flown by more than one Carrier') %>%
+  kable_styling(full_width = FALSE) %>%
+  scroll_box(height = '300px')
+```
+
+*- For each such route, calculate the average arrival delay for each airline (exclude NAs). Find the names of these airlines.*
+
+```{r, echo = TRUE}
+# Using above df, calculates mean arrival delay (excludes NAs)
+routes_avg = flights %>%
+  inner_join(routes, by = c('origin', 'dest', 'carrier')) %>%
+  group_by(origin, dest, carrier) %>%
+  summarize(mean_arr_delay = round(mean(arr_delay, na.rm = TRUE), 2),
+            .groups = 'drop') %>%
+  inner_join(airlines, by = 'carrier') %>%
+  relocate(name, .after = carrier)
+
+# Prints the resulting dataframe
+kable(routes_avg, caption = 'Average Arrival Delay for Each Airline') %>%
+  kable_styling(full_width = FALSE) %>%
+  scroll_box(height = '300px')
+```
+
+
+*- For each such route, identify the airline with the worst and best average arrival delay*
+
+```{r, echo = TRUE}
+# Uses min/max to determine best/worst and classify accordingly
+best_worst = routes_avg %>%
+  group_by(origin, dest) %>%
+  filter(mean_arr_delay == min(mean_arr_delay) | mean_arr_delay == max(mean_arr_delay)) %>%
+  mutate(status = ifelse(mean_arr_delay == min(mean_arr_delay), 'Best', 'Worst')) %>%
+  arrange(origin, dest, mean_arr_delay)
+
+kable(best_worst, caption = 'Best and Worst Average Arrival Delay') %>%
+ kable_styling(full_width = FALSE) %>%
+scroll_box(height = '300px')
+```
+
+*-Identify the route with the greatest difference between the worst and best performing airlines.*
+
+```{r, echo = TRUE}
+# Calculates largest difference in mean delays to find route.
+greatest_diff = best_worst %>%
+  group_by(origin, dest) %>%
+  summarize(
+    delay_gap = max(mean_arr_delay) - min(mean_arr_delay),
+    .groups = 'drop'
+  ) %>%
+  arrange(desc(delay_gap)) %>%
+  slice(1)
+
+kable(greatest_diff)
+
+  
+```
+
+*Determine the reason for this difference.* Upon inspection of the data, we notice that the majority of flights on this route are provided by a single carrier (DL). This could imply that operational issues within that specific carrier could lead to increased delay times and thus skew the overall route mean delay.
+
+```{r, echo=TRUE}
+dl = flights %>%
+  filter(origin == 'JFK', dest == 'ATL') %>%
+  count(carrier)
+kable(dl)
+```
+
+## Question 7
+
+*Identify all columns with missing entries, typos and any other inconsistencies in the dataset below (load it just by running the code; created using `dput` command, FYI):*
+
+```{r, echo = TRUE}
+list1 = structure(list(id = c("id_1", "id_2", "id_3", "id_4", "id_5", 
+"id_6", "id_7", "id_8", "id_9", "id_10", "id_11", "id_12", "id_13", 
+"id_14", "id_15", "id_16", "id_17", "id_18", "id_19", "id_20", 
+"id_21", "id_22", "id_23", "id_24", "id_25", "id_26", "id_27", 
+"id_28", "id_29", "id_30", "id_31", "id_32", "id_33", "id_34", 
+"id_35", "id_36", "id_37", "id_38", "id_39", "id_40", "id_41", 
+"id_42", "id_43", "id_44", "id_45", "id_46", "id_47", "id_48", 
+"id_49", "id_50"), age = c(50L, 34L, 70L, 33L, 22L, 61L, 69L, 
+73L, 62L, 56L, 71L, 33L, 73L, 44L, 45L, 46L, 24L, 70L, 46L, 76L, 
+47L, 76L, 28L, 48L, 54L, 27L, 45L, 26L, 61L, 28L, 38L, 55L, 33L, 
+36L, 62L, 58L, 72L, 31L, 34L, 51L, 61L, 64L, 26L, 28L, 60L, 29L, 
+42L, 46L, 79L, 72L), gender = c("male", "male", "male", "female", 
+"female", "male", "female", "male", "male", "female", "female", 
+"male", "male", "female", "male", "male", "male", "male", "female", 
+"male", "male", "male", "male", "female", "femal", "male", "female", 
+"female", "female", "female", "male", "female", "female", "female", 
+"male", "male", "female", "male", "female", "female", "male", 
+"female", "female", "male", "male", "female", "male", "male", 
+"male", "female"), height = c(174.4, 197.7, 174.1, 194.5, NA, 
+180.4, 170.5, 157.4, 196.8, 165.1, 153, 197.4, 186, 157.1, 177.5, 
+197.7, 179.3, 170.2, 182.4, NA, 165.4, 161, 168.5, 199.2, 157.7, 
+154.6, 157.1, 184.5, 181, 194.6, 183.6, 186.9, 176.1, 183, 191.1, 
+189.3, 199, 172, 165.6, 170.5, 150.5, 159.2, 192.1, 161.6, 162, 
+153.8, 162.3, 186.6, 192.4, 174.9), weight = c(69.4, 62.3, 55.6, 
+69.5, 78.6, 60.8, 72.2, 60.9, 75.1, 67.7, 82.5, 68.7, 67.8, 76.7, 
+87, 61.1, 70.6, 63.3, 81.5, 59.2, 93.2, 87.3, 83.4, 80.9, 68.6, 
+76.5, 93.7, 79.1, 92, 65.6, 85.4, 63.3, 79.7, 74.1, 63.3, 78.2, 
+95.7, 95.1, 63.7, 66.1, 99.3, 81, 96.9, 73.3, 70.3, 83, 57.6, 
+78.6, 61.9, 98.1), blood_type = c("O", "A", "O", "O", "B", "AB", 
+"O", "O", "O", "AB", "A", "O", "O", "O", "B", "A", "B", "AB", 
+"O", "AB", "A", "AB", "O", "B", "A", "A", "B", "AB", "A", "B", 
+"B", "A", "O", "O", "O", "B", "O", "A", "A", "B", "A", "O", "AB", 
+"A", "A", "O", "O", "B", "A", "O"), disease_status = c("diseased", 
+"healthy", "healthy", "healthy", "healthy", "healthy", "diseased", 
+"healthy", "diseased", "Healthy", "diseased", "healthy", "diseased", 
+"healthy", "diseased", "healthy", "healthy", "healthy", "healthy", 
+"healthy", "healthy", "diseased", "healthy", "diseased", "healthy", 
+"healthy", "healthy", "healthy", "diseased", "diseased", "healthy", 
+"healthy", "healthy", "diseased", "diseased", "diseased", "healthy", 
+"diseased", "healthy", "healthy", "healthy", "healthy", "healthy", 
+"diseased", "diseased", "diseased", "healthy", "healthy", "diseased", 
+"diseased"), cholesterol = c(228, 223, 213, 198, 166, 151, 195, 
+199, 189, 196, 221, 156, 185, 230, 234, 174, 185, 236, 235, 180, 
+165, 220, 160, 153, 250, 153, 184, 242, 212, 179, 224, 233, 181, 
+199, 220, 214, 214, 248, 191, 162, 203, 173, 199, 187, 248, 189, 
+173, 212, 164, 247), glucose = c(96, 78, 101, 119, 103, 91, 86, 
+NA, 77, 80, 115, 85, 88, 109, NA, 71, 90, 94, 91, 87, 113, 93, 
+97, 118, 109, 80, 85, 119, 99, 108, 89, 108, 97, 116, 79, 84, 
+75, 81, 119, NA, 106, 109, 75, 82, 84, 75, 76, 120, 119, 77), 
+    smoker = c("yes", "yes", "yes", "yes", "no", "yes", "no", 
+    "yes", "no", "no", "no", "no", "no", "yes", "no", "yes", 
+    "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "no", 
+    "no", "yes", "yes", "yes", "no", "no", "yes", "no", "yes", 
+    "no", "yes", "no", "yes", "yes", "yes", "no", "no", "yes", 
+    "no", "no", "no", "no", "no", "no", "yes"), exercise = c("occasional", 
+    "regular", "occasional", "regular", "none", "occasional", 
+    "regular", "none", "occasional", "none", "occasional", "none", 
+    "none", "regular", "occasional", "none", "regular", "regular", 
+    "none", "occasional", "none", "occasional", "occasional", 
+    "occasional", "regular", "occasional", "regular", "regular", 
+    "regular", "occasional", "occasional", "none", "none", "regular", 
+    "occasional", "occasional", "none", "none", "none", "none", 
+    "occasional", "regular", "regular", "none", "regular", "occasional", 
+    "occasional", "none", "occasional", "regular"), income = c(84820L, 
+    81547L, 22588L, 72490L, 74533L, 25338L, 41469L, 57315L, 63629L, 
+    88662L, 62615L, 56261L, 58499L, 82232L, 77584L, 77275L, 38468L, 
+    54510L, 91326L, 78611L, 31402L, 29586L, 21441L, 58269L, 84173L, 
+    88295L, 37940L, 43750L, 69750L, 92356L, 82518L, 91455L, 68866L, 
+    51178L, 68275L, 27689L, 35418L, 81318L, 62405L, 86851L, 25654L, 
+    47553L, 74474L, 51409L, 22607L, 55360L, 96351L, 21516L, 41927L, 
+    55810L), education = c("master", "bachelor", "PhD", "master", 
+    "bachelor", "highschool", "PhD", "highschool", "PhD", "PhD", 
+    "bachelor", "highschool", "master", "bachelor", "PhD", "PhD", 
+    "PhD", "bachelor", "master", "highschool", "PhD", "highschool", 
+    "bachelor", "master", "highschool", "highschool", "master", 
+    "master", "bachelor", "PhD", "highschool", "PhD", "master", 
+    "master", "master", "PhD", "highschool", "master", "master", 
+    "highschool", "bachelor", "highschool", "bachelor", "PhD", 
+    "bachelor", "highschool", "master", "highschool", "bachelor", 
+    "bachelor"), region = c("North", "South", "North", "West", 
+    "North", "West", "South", "South", "West", "South", "West", 
+    "South", "West", "East", "North", "West", "North", "North", 
+    "West", "North", "East", "West", "South", "North", "North", 
+    "East", "East", "North", "North", "West", "South", "West", 
+    "West", "East", "West", "North", "West", "North", "East", 
+    "North", "West", "South", "South", "East", "North", "West", 
+    "West", "East", "North", "East"), marital_status = c("divorced", 
+    "single", "divorced", "divorced", "divorced", "divorced", 
+    "divorced", "married", "divorced", "married", "divorced", 
+    "widowed", "married", "single", "widowed", "widowed", "single", 
+    "divorced", "widowed", "widowed", "single", "married", "single", 
+    "married", "widowed", "married", "single", "single", "widowed", 
+    "married", "widowed", "divorced", "single", "married", "single", 
+    "widowed", "widowed", "married", "widowed", "divorced", "married", 
+    "married", "divorced", "single", "married", "widowed", "divorced", 
+    "divorced", "single", "divorced")), row.names = c(NA, -50L
+), class = c("tbl_df", "tbl", "data.frame"))
+
+# Load required libraries
+library(dplyr)
+library(purrr)
+
+# Finds all columns with NA's and unique values for categorical variables
+inconsistencies = list1 %>%
+  summarise(across(everything(), list(
+    na_count = ~sum(is.na(.)),
+    unique_vals = ~paste(unique(.), collapse = ", ")
+  ))) %>%
+  tidyr::pivot_longer(everything(), 
+               names_to = c("column", ".value"), 
+               names_sep = "_((?=(na_count|unique_vals)))")
+
+# From the unique values above, we define a true set
+true_set = list(
+  gender = c('male', 'female'),
+  disease_status = c('healthy', 'diseased'),
+  blood_type = c('A', 'B', 'AB', 'O'),
+  smoker = c('yes', 'no'),
+  exercise = c('none', 'occasional', 'regular'),
+  education = c('highschool', 'bachelor', 'master','PhD'),
+  marital_status = c('single', 'married', 'divorced', 'widowed'),
+  region = c('North', 'South', 'East', 'West')
+)
+
+# Now simplify by adding unexpected values in one clean step
+inconsistencies %>%
+  mutate(
+    # Identify categorical columns from true_set
+    is_categorical = column %in% names(true_set),
+     # Find unexpected values for categorical columns
+    unexpected = ifelse(is_categorical,
+      map2_chr(unique_vals, column, function(vals, col) { 
+        # Get actual unique values 
+        actual_vals <- strsplit(vals, ", ")[[1]]
+        actual_vals <- actual_vals[actual_vals != "NA"]
+        unexpected_vals <- setdiff(actual_vals, true_set[[col]]) 
+        # Find unexpected values
+        if (length(unexpected_vals) > 0) {
+          paste(unexpected_vals, collapse = ", ")
+        } else {
+          ""
+        }
+      }),
+      ""
+    ),
+    has_issues = na_count > 0 | unexpected != "" # Clean up for final output
+  ) %>%
+  filter(has_issues) %>%
+  select(column, na_count, unexpected) %>% kable()
+```
