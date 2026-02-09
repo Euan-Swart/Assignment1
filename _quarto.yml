@@ -1,21 +1,19 @@
 project:
   type: website
-  output-dir: _site
 
 website:
-  title: "Assignment 1"
-  subtitle: "Statistical Computing"
-  author: "Euan Swart (SWREUA001)"
+  title: "Assignment"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - about.qmd
 
 format:
   html:
-    theme:
-      - cosmo
-      - custom.scss
+    theme: cosmo
+    css: styles.css
     toc: true
-    toc-depth: 3
-    number-sections: true
-    df-print: paged
-    code-fold: false
-    code-tools: true
-    smooth-scroll: true
+
+editor: visual
+
