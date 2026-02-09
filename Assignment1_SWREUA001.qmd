@@ -5,9 +5,6 @@ author: "Euan Swart (SWREUA001)"
 date: last-modified
 project:
   type: website
-  render:
-    - index.qmd
-    output-dir:docs
 format:
   html:
     theme: 
@@ -238,8 +235,7 @@ kable(dist_tbl)
 
 ## Question 3
 
-*Explain why the standard deviation is `NA` for one carrier, and why it is `0` for others. Demonstrate your answer using code.* 
-\newline The standard deviation for carrier 'OO' is `NA` because, there is only one flight from the carrier that meets the required criteria so the row vector has length one. As such, when the standard deviation function is applied to that row vector it returns the value `NA`.
+*Explain why the standard deviation is `NA` for one carrier, and why it is `0` for others. Demonstrate your answer using code.* \newline The standard deviation for carrier 'OO' is `NA` because, there is only one flight from the carrier that meets the required criteria so the row vector has length one. As such, when the standard deviation function is applied to that row vector it returns the value `NA`.
 
 ```{r, echo = TRUE}
 # Filter to show that the row vector has length 1
@@ -327,7 +323,6 @@ kable(routes_avg, caption = 'Average Arrival Delay for Each Airline') %>%
   kable_styling(full_width = FALSE) %>%
   scroll_box(height = '300px')
 ```
-
 
 *- For each such route, identify the airline with the worst and best average arrival delay*
 
